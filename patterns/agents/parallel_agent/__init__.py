@@ -1,0 +1,1 @@
+from ...ADK.agents.parallel_agent import agent
