@@ -65,36 +65,85 @@ async def main():
                                 print(f"Agent Text: {content}")
 
 def render_a2ui(messages: list):
-    print("\n--- 📱 A2UI RENDERER (Adjacency List) ---")
-    for msg in messages:
-        if "surfaceUpdate" in msg:
-            update = msg["surfaceUpdate"]
-            components = {c["id"]: c for c in update["components"]}
-            
-            # Start rendering from root
-            if "root" in components:
-                render_component(components["root"], components, indent=0)
-            else:
-                print("⚠️ No 'root' component found in surfaceUpdate.")
-    print("----------------------------------------\n")
+    print("\n--- 📱 A2UI v0.9 RENDERER (Adjacency List) ---")
+    data_models = {}
 
-def render_component(comp, all_components, indent=0):
+    for msg in messages:
+        version = msg.get("version", "legacy")
+        
+        # 1. createSurface
+        if "createSurface" in msg:
+            cs = msg["createSurface"]
+            surface_id = cs.get("surfaceId", "default")
+            catalog_id = cs.get("catalogId", "basic")
+            print(f"🔹 [createSurface] surfaceId='{surface_id}' (version: {version})")
+            print(f"   Catalog: {catalog_id}")
+
+        # 2. updateDataModel
+        if "updateDataModel" in msg:
+            udm = msg["updateDataModel"]
+            surface_id = udm.get("surfaceId", "default")
+            path = udm.get("path", "/")
+            val = udm.get("value", {})
+            data_models[surface_id] = val
+            print(f"📊 [updateDataModel] surfaceId='{surface_id}' path='{path}': {val}")
+
+        # 3. updateComponents (v0.9) or surfaceUpdate (legacy)
+        components_list = None
+        surface_id = "default"
+
+        if "updateComponents" in msg:
+            uc = msg["updateComponents"]
+            surface_id = uc.get("surfaceId", "default")
+            components_list = uc.get("components", [])
+            print(f"🧩 [updateComponents] surfaceId='{surface_id}' ({len(components_list)} components):")
+        elif "surfaceUpdate" in msg:
+            su = msg["surfaceUpdate"]
+            surface_id = su.get("surfaceId", "default")
+            components_list = su.get("components", [])
+            print(f"🧩 [surfaceUpdate (legacy)] surfaceId='{surface_id}' ({len(components_list)} components):")
+
+        if components_list:
+            comp_map = {c["id"]: c for c in components_list if "id" in c}
+            if "root" in comp_map:
+                render_component(comp_map["root"], comp_map, indent=1)
+            else:
+                print("   ⚠️ No 'root' component found in component list.")
+
+    print("---------------------------------------------\n")
+
+def render_component(comp, all_components, indent=1):
     space = "  " * indent
     comp_type = comp.get("component", "Unknown")
     comp_id = comp.get("id", "?")
-    props = comp.get("props", {})
+    props = comp.get("properties") or comp.get("props") or comp
     
-    # Header for the component
-    info = ""
+    # Header info
+    info = []
     if comp_type == "Text":
-        info = f'"{props.get("text", "")}"'
+        text_val = props.get("text", "")
+        variant = props.get("variant") or props.get("usageHint", "body")
+        info.append(f'text="{text_val}" [{variant}]')
     elif comp_type == "Button":
-        info = f'label="{props.get("label", "")}"'
+        variant = props.get("variant", "default")
+        label = props.get("label", "")
+        action = props.get("action", "")
+        action_name = action.get("name", str(action)) if isinstance(action, dict) else str(action)
+        if label:
+            info.append(f'label="{label}"')
+        info.append(f'[{variant}] action="{action_name}"')
+    elif comp_type == "Card":
+        info.append("[Container]")
+
+    info_str = " " + " ".join(info) if info else ""
+    print(f"{space}[{comp_type}] id={comp_id}{info_str}")
     
-    print(f"{space}[{comp_type}] id={comp_id} {info}")
-    
-    # Render children
-    children_ids = comp.get("children", [])
+    # Render child (Card, Button) or children (Column, Row)
+    children_ids = list(props.get("children", []))
+    single_child = props.get("child")
+    if single_child:
+        children_ids.append(single_child)
+
     for child_id in children_ids:
         if child_id in all_components:
             render_component(all_components[child_id], all_components, indent + 1)

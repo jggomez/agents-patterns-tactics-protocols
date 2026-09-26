@@ -27,17 +27,21 @@ Once the server is running, you can view the agent's definition and capabilities
 
 ## 📂 Project Structure
 
-- **[agent.py](agent.py)**: The core agent definition. It configures the `LlmAgent` with Vertex AI, sets up the system instructions, and connects to the MCP toolset for currency exchange rates. It then wraps the agent for A2A exposure.
+- **[agent.py](agent.py)**: The core agent definition. It configures the `LlmAgent` with **Gemini 3.5 Flash** (via `GEMINI_MODEL`), sets up the system instructions, and connects to the MCP toolset for currency exchange rates. It then wraps the agent for A2A exposure.
 - **[test_client.py](test_client.py)**: A standalone test client using the `a2a-sdk`. It simulates an external caller by resolving the AgentCard, sending a message, and querying the resulting task state.
-- **[.env](.env)**: Contains environment variables for Vertex AI configuration (`PROJECT_ID`, `LOCATION`, etc.).
-- **[pyproject.toml](pyproject.toml)**: Defines the Python environment and dependencies (`google-adk`, `a2a-sdk`, `fastmcp`).
+- **[.env.example](.env.example)**: Environment variable template supporting both Gemini Developer API (`GEMINI_API_KEY`) and Google Cloud Vertex AI (`PROJECT_ID`, `LOCATION`).
+- **[pyproject.toml](pyproject.toml)**: Defines the Python environment (`>=3.10`) and dependencies (`google-adk`, `a2a-sdk`, `fastmcp`).
 
 ## 🛠️ Installation
 
 This project uses `uv` for lightning-fast dependency management.
 
 ```bash
-# Install dependencies and create a virtual environment
+# Setup environment
+cp .env.example .env
+# Set GEMINI_API_KEY or Vertex AI credentials in .env
+
+# Install dependencies into local virtual environment
 uv sync
 ```
 
@@ -46,24 +50,28 @@ uv sync
 To see the A2A protocol in action, follow these steps in order:
 
 ### 1. Start the MCP Server
-Ensure you have the MCP server running (usually on port 8080). This server provides the actual `get_exchange_rate` tool logic.
+Ensure you have the MCP server running on port 8080:
+```bash
+cd ../MCP && uv run server.py
+# Or from the protocols root: ./run.sh mcp
+```
 
 ### 2. Start the A2A Agent Server
-Run the agent server using `uvicorn`. This command will detect the `a2a_app` and start listening on port 10000.
-
+Run the agent server (Port 10000):
 ```bash
-# Recommended: Run using uvicorn directly
-uv run python -m uvicorn agent:a2a_app --host localhost --port 10000
-
-# Alternative: Run the script directly
 uv run python agent.py
+# Or via uvicorn directly:
+uv run python -m uvicorn agent:a2a_app --host 0.0.0.0 --port 10000
+# Or from protocols root:
+./run.sh a2a
 ```
 
 ### 3. Run the Test Client
-Once the agent server is up, execute the test client to send a currency conversion request.
-
+Once the agent server is up, execute the test client to send a currency conversion request:
 ```bash
 uv run test_client.py
+# Or from protocols root:
+./run.sh a2a-test
 ```
 
 > [!IMPORTANT]

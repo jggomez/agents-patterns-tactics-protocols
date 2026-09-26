@@ -41,7 +41,7 @@ graph TD
 | :--- | :--- | :--- | :--- | :--- |
 | **[MCP](./MCP)** | `protocols/MCP` | `8080` | `FastMCP`, `httpx` | Exposes local/remote tools via Model Context Protocol over streamable HTTP. Provides the `get_exchange_rate` tool. |
 | **[A2A](./A2A)** | `protocols/A2A` | `10000` | `google-adk`, `a2a-sdk`, `uvicorn` | Exposes an ADK agent over Agent-to-Agent protocol with discovery card (`/.well-known/agent.json`) and JSON-RPC task endpoints. |
-| **[A2UI](./A2UI)** | `protocols/A2UI` | `10001`<br/>`5173` | Backend: ADK + A2A<br/>Frontend: Lit + Vite | Declarative agent-driven UI. The LLM generates structured "Adjacency List" component trees rendered by Lit Web Components. |
+| **[A2UI](./A2UI)** | `protocols/A2UI` | `10001`<br/>`5173` | Backend: ADK + A2A<br/>Frontend: Lit + `@a2ui/lit` v0.9 | Official Agent-to-User Interface Protocol v0.9 (Prompt-First architecture, createSurface, updateComponents, updateDataModel) rendered with `@a2ui/web_core`. |
 | **[AG-UI](./AGUI)** | `protocols/AGUI` | `8000`<br/>`3000` | Backend: `ag-ui-adk` + FastAPI<br/>Frontend: Next.js 16 + CopilotKit | Real-time event streaming bridge connecting Google ADK to modern React/Next.js copilot chat interfaces. |
 
 ---

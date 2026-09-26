@@ -27,15 +27,19 @@ def get_exchange_rate(currency_from: str = "USD", currency_to: str = "EUR", curr
 
 ## 📂 Project Structure
 
-- **[server.py](server.py)**: The core MCP server. It listens on port 8080 and exposes the `get_exchange_rate` tool via a Streamable-HTTP interface at `/mcp`.
+- **[server.py](server.py)**: The core MCP server. It listens on port 8080 (configurable via `PORT`) and exposes the `get_exchange_rate` tool via a Streamable-HTTP interface at `/mcp`.
 - **[test_server.py](test_server.py)**: A client script that connects to the local server, lists available tools, and executes a test call to verify everything is working.
-- **[pyproject.toml](pyproject.toml)**: Defines the Python environment and dependencies (`fastmcp`, `httpx`).
+- **[.env.example](.env.example)**: Environment variable template (`PORT=8080`).
+- **[pyproject.toml](pyproject.toml)**: Defines the Python environment (`>=3.10`) and dependencies (`fastmcp`, `httpx`).
 
 ## 🛠️ Installation
 
-This project uses `uv` for dependency management.
+This project uses `uv` for lightning-fast dependency management.
 
 ```bash
+# Setup environment template
+cp .env.example .env
+
 # Install dependencies into a local virtual environment
 uv sync
 ```
@@ -45,17 +49,21 @@ uv sync
 Follow these steps to run the server and verify it:
 
 ### 1. Run the MCP Server
-Start the server in your terminal. It will default to port 8080.
+Start the server in your terminal (Port 8080):
 
 ```bash
 uv run server.py
+# Or from protocols root:
+./run.sh mcp
 ```
 
 ### 2. Test the Server
-In a separate terminal, run the test script to ensure the tools are reachable.
+In a separate terminal, run the test script to ensure the tools are reachable:
 
 ```bash
 uv run test_server.py
+# Or from protocols root:
+./run.sh mcp-test
 ```
 
 > [!TIP]

@@ -93,12 +93,14 @@ def check_a2a_module() -> bool:
 
 
 def check_a2ui_module() -> bool:
-    print_step("A2UI Protocol (Agent-to-User Interface)")
+    print_step("A2UI Protocol (Agent-to-User Interface v0.9)")
     a2ui_dir = BASE_DIR / "A2UI"
     cmd = [
         "uv", "run", "--directory", str(a2ui_dir),
         "python", "-c",
-        "from agent import root_agent, a2a_app, MODEL_NAME; "
+        "from agent import root_agent, a2a_app, MODEL_NAME, A2UI_SCHEMA_EXPLANATION; "
+        "assert 'createSurface' in A2UI_SCHEMA_EXPLANATION, 'Missing createSurface in v0.9 schema'; "
+        "assert 'v0.9' in A2UI_SCHEMA_EXPLANATION, 'Missing v0.9 version in schema'; "
         "print(f'{root_agent.name}|{MODEL_NAME}')"
     ]
     try:
@@ -107,11 +109,21 @@ def check_a2ui_module() -> bool:
         if lines:
             name, model = lines[-1].split("|")
             print_ok(f"A2UI agent loaded: '{name}' using model '{model}'")
-            print_ok("A2UI Adjacency List instructions & CORS configured")
-            return True
+            print_ok("A2UI v0.9 Adjacency List (createSurface, updateComponents, Card) verified")
         else:
             print_ok("A2UI agent loaded successfully")
-            return True
+
+        # Verify client-lit dependencies
+        pkg_json = a2ui_dir / "client-lit" / "package.json"
+        if pkg_json.is_file():
+            import json
+            with open(pkg_json, encoding="utf-8") as f:
+                pkg_data = json.load(f)
+                deps = pkg_data.get("dependencies", {})
+                if "@a2ui/lit" in deps and "@a2ui/web_core" in deps:
+                    print_ok(f"Lit web client: official @a2ui/lit ({deps['@a2ui/lit']}) & @a2ui/web_core installed")
+
+        return True
     except subprocess.CalledProcessError as exc:
         print_err(f"A2UI check failed: {exc.stderr}")
         return False

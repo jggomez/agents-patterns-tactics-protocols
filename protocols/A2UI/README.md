@@ -1,34 +1,134 @@
-# A2UI (Agent-to-User Interface) - Official Adjacency List Protocol
+# A2UI (Agent-to-User Interface) - Official Specification v0.9
 
-This directory contains a modern, production-grade example of the **Agent-to-User Interface (A2UI)** protocol within an A2A (Agent-to-Agent) ecosystem.
+This directory contains a production-grade implementation of the **Agent-to-User Interface (A2UI) Protocol v0.9** within an A2A (Agent-to-Agent) ecosystem, powered by **Gemini 3.5 Flash** and Google's official **`@a2ui/lit`** and **`@a2ui/web_core`** libraries.
 
-## 🚀 The A2UI Evolution: Adjacency List Model
+---
 
-In this implementation, the A2UI protocol uses the **Adjacency List** model. Unlike traditional deeply nested JSON trees, this model represents UI components as a flat list where parents reference children by their unique IDs.
+## 🚀 The A2UI Evolution: Prompt-First Architecture (v0.9)
 
-### Why Adjacency Lists?
-- **LLM-Friendly**: Models generate flat structures more reliably than complex nested hierarchies.
-- **Streaming Support**: Clients can render components as they arrive in the stream.
-- **Incremental Updates**: Update single components without re-sending the entire UI state.
+In version **0.9**, the A2UI protocol evolved from legacy structured output into a **Prompt-First** model:
+- **Prompt-First Philosophy**: In-context schema design optimized for LLM system instructions, reducing token overhead and eliminating fragile deep nesting.
+- **Envelope Standardization**: Every message specifies `"version": "v0.9"`.
+- **Decoupled State**: Dynamic state updates (`updateDataModel`) are separated from declarative UI layout (`updateComponents`).
+- **Standard Catalogs**: Adheres to the official [Basic Catalog](https://a2ui.org/specification/v0_9/basic_catalog.json).
+
+---
+
+## 📨 Core Server-to-Client Messages
+
+The agent streams an array of self-contained JSON messages:
+
+```json
+[
+  {
+    "version": "v0.9",
+    "createSurface": {
+      "surfaceId": "currency_view",
+      "catalogId": "https://a2ui.org/specification/v0_9/basic_catalog.json"
+    }
+  },
+  {
+    "version": "v0.9",
+    "updateDataModel": {
+      "surfaceId": "currency_view",
+      "path": "/",
+      "value": {
+        "base": "USD",
+        "target": "MXN",
+        "rate": 17.35,
+        "amount": 100,
+        "converted": 1735.00
+      }
+    }
+  },
+  {
+    "version": "v0.9",
+    "updateComponents": {
+      "surfaceId": "currency_view",
+      "components": [
+        {
+          "id": "root",
+          "component": "Column",
+          "children": ["header_text", "rate_card", "actions_row"]
+        },
+        {
+          "id": "header_text",
+          "component": "Text",
+          "text": "Currency Conversion",
+          "variant": "h1"
+        },
+        {
+          "id": "rate_card",
+          "component": "Card",
+          "child": "card_content"
+        },
+        {
+          "id": "card_content",
+          "component": "Column",
+          "children": ["rate_info", "rate_caption"]
+        },
+        {
+          "id": "rate_info",
+          "component": "Text",
+          "text": "100 USD = 1,735.00 MXN",
+          "variant": "h2"
+        },
+        {
+          "id": "rate_caption",
+          "component": "Text",
+          "text": "Rate: 1 USD = 17.35 MXN (Live data via FastMCP)",
+          "variant": "caption"
+        },
+        {
+          "id": "actions_row",
+          "component": "Row",
+          "children": ["refresh_btn"]
+        },
+        {
+          "id": "refresh_btn",
+          "component": "Button",
+          "child": "refresh_btn_text",
+          "variant": "primary",
+          "action": { "name": "refresh_rate" }
+        },
+        {
+          "id": "refresh_btn_text",
+          "component": "Text",
+          "text": "Refresh Rate"
+        }
+      ]
+    }
+  }
+]
+```
+
+---
 
 ## 🛠️ System Architecture
 
-1.  **MCP Server** (`../MCP/server.py`): Provides real-time exchange rate data.
-2.  **AI Agent** (`agent.py`): 
-    - Fetches data via MCP.
-    - Generates a dynamic UI using the A2UI Adjacency List schema.
-    - Delivers the UI payload via A2A with the `---a2ui_JSON---` delimiter.
-    - **CORS Enabled** to allow web client communication.
-3.  **Lit Web Client** (`client-lit/`):
-    - Built with **Lit (Web Components)** and **TypeScript**.
-    - Implements a pure A2UI Message Processor and Renderer.
-    - Native components: `a2ui-text`, `a2ui-button`, `a2ui-column`, `a2ui-row`.
+```mermaid
+flowchart LR
+    MCP[FastMCP Server :8080] -->|Exchange Rate Data| Agent[A2UI Agent :10001]
+    Agent -->|Gemini 3.5 Flash| Spec["A2UI v0.9 (createSurface + updateComponents)"]
+    Spec -->|JSON-RPC A2A| Client[Lit Web Client :5173]
+    Client --> Processor["@a2ui/web_core MessageProcessor"]
+    Processor --> Surface["<a2ui-surface> (@a2ui/lit)"]
+```
 
-## 📂 Project Structure
+1. **MCP Server** (`../MCP/server.py`): Serves live exchange rates via FastMCP over HTTP SSE.
+2. **AI Agent** (`agent.py`):
+   - Fetches rates via `MCPToolset`.
+   - Formulates responses adhering to A2UI v0.9 Prompt-First instructions.
+   - Streams text and UI payload delimited by `---a2ui_JSON---`.
+   - Exposes A2A JSON-RPC endpoint on port `10001` with CORS enabled.
+3. **Lit Web Client** (`client-lit/`):
+   - Integrated with Google's official `@a2ui/lit` and `@a2ui/web_core` 0.9 libraries.
+   - Dispatches user actions (such as `"refresh_rate"`) back to the agent.
+4. **Simulator & Verifier**:
+   - `test_client.py`: Python CLI tool to inspect the generated tree in the terminal.
+   - `../verify.py`: Diagnostic suite checking v0.9 compliance.
 
-- **`agent.py`**: The A2UI Agent server (Port 10001).
-- **`client-lit/`**: Modern web client (Port 5173).
-- **`test_client.py`**: Python-based CLI simulator.
+---
 
 ## 🏁 How to Run
 
@@ -40,39 +140,27 @@ uv run python server.py
 
 ### 2. Start the A2UI Agent
 ```bash
-# Return to A2UI directory if you were in MCP
 cd ../A2UI 
-uv run python -m uvicorn agent:a2a_app --host localhost --port 10001
-# OR
 uv run python agent.py
+# Or via uvicorn directly on port 10001:
+uv run python -m uvicorn agent:a2a_app --host 0.0.0.0 --port 10001
 ```
 
 ### 3. Launch the Lit Web Client
 ```bash
 cd client-lit
-source ~/.nvm/nvm.sh  # If using NVM
 npm install
 npm run dev
 ```
 
 ### 4. Open the UI
-Go to `http://localhost:5173` (or the port shown by Vite) and ask:
+Navigate to `http://localhost:5173` and query:
 > *"What is the exchange rate for 100 USD to MXN?"*
 
-## 📝 A2UI Protocol Detail (JSONRPC)
+---
 
-The web client communicates using the following JSON-RPC structure:
-
-- **Method**: `message/send`
-- **Params**:
-  ```json
-  {
-    "message": {
-      "role": "user",
-      "parts": [{"kind": "text", "text": "YOUR MESSAGE"}],
-      "messageId": "UNIQUE_ID"
-    }
-  }
-  ```
-
-The agent responds with a `Task` object containing the `history`. The client then parses the `---a2ui_JSON---` block from the last agent turn and passes the `components` list to the `<a2ui-surface>` renderer.
+## 🧪 CLI Simulator Test
+Run the command-line client simulator to verify v0.9 message streaming:
+```bash
+uv run python test_client.py
+```
