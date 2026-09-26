@@ -52,7 +52,11 @@ Ensure you have the MCP server running (usually on port 8080). This server provi
 Run the agent server using `uvicorn`. This command will detect the `a2a_app` and start listening on port 10000.
 
 ```bash
-uv run uvicorn agent:a2a_app --host localhost --port 10000
+# Recommended: Run using uvicorn directly
+uv run python -m uvicorn agent:a2a_app --host localhost --port 10000
+
+# Alternative: Run the script directly
+uv run python agent.py
 ```
 
 ### 3. Run the Test Client

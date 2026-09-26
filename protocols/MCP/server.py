@@ -52,12 +52,12 @@ def get_exchange_rate(
 
 
 if __name__ == "__main__":
-    logger.info(f"MCP server started on port {os.getenv('PORT', 8080)}")
-    # Could also use 'sse' transport, host="0.0.0.0" required for Cloud Run.
+    port = int(os.getenv("PORT", 8080))
+    logger.info(f"MCP server starting on http://0.0.0.0:{port}/mcp")
     asyncio.run(
         mcp.run_async(
             transport="http",
             host="0.0.0.0",
-            port=os.getenv("PORT", 8080),
+            port=port,
         )
     )

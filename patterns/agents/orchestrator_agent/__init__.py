@@ -1,1 +1,5 @@
-from ...ADK.agents.orchestrator_agent import agent
+"""Orchestrator Agent pattern package."""
+
+from .agent import root_agent
+
+__all__ = ["root_agent"]

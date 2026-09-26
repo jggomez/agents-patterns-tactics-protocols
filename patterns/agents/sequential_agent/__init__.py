@@ -1,1 +1,5 @@
-from ...ADK.agents.sequential_agent import agent
+"""Sequential Agent pattern package."""
+
+from .agent import root_agent
+
+__all__ = ["root_agent"]

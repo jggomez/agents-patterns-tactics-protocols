@@ -16,8 +16,10 @@ To answer questions about exchange rates, use the 'get_exchange_rate' tool.
 When providing information, be concise and friendly.
 """
 
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
 root_agent = LlmAgent(
-    model="gemini-2.5-flash",
+    model=MODEL_NAME,
     name="agui_currency_agent",
     description="An agent compatible with AG-UI protocol for currency exchange",
     instruction=SYSTEM_INSTRUCTION,

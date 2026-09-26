@@ -40,7 +40,8 @@ uv run python main.py
 ### 3. Start the Next.js Frontend
 ```bash
 cd frontend
-source ~/.nvm/nvm.sh
+source ~/.nvm/nvm.sh  # If using NVM
+npm install
 npm run dev
 ```
 

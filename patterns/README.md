@@ -1,19 +1,35 @@
 # AI Agent Workflow Patterns with Google ADK
 
-This directory explores classic agent workflow patterns implemented using the **Google Agent Development Kit (ADK)**. These patterns demonstrate different ways to coordinate multiple agents or structure complex workflows.
+This directory explores classic agent workflow patterns implemented using the **Google Agent Development Kit (ADK)** and **Gemini 3.5 Flash**. These patterns demonstrate different ways to coordinate multiple agents or structure complex workflows.
 
 ## 📂 Structure
 
-The patterns are located in the `agents/` directory, each demonstrating a specific orchestration strategy:
+The patterns are organized under a centralized architecture managed by `uv`:
 
 ```
 patterns/
+├── pyproject.toml           # Project dependencies & tool configurations (uv)
+├── uv.lock                  # Deterministic dependency lockfile
+├── .env.example             # Environment variable template
+├── run.sh                   # Interactive shell to run & verify agents
+├── verify.py                # Self-diagnostic health check script
+├── cli.py                   # Unified CLI entry point
+├── tests/                   # Automated pytest suite
+│   ├── test_common.py
+│   ├── test_agents_structure.py
+│   ├── test_execution_mock.py
+│   └── test_workflow.py
 └── agents/
+    ├── __init__.py
+    ├── common/              # Centralized configuration & runner
+    │   ├── config.py        # Gemini 3.5 Flash & retry policies
+    │   └── runner.py        # Session management & ADK runner
     ├── first_agent/         # Basic conversational agent with tool integration
     ├── loop_agent/          # Iterative refinement with feedback loops
     ├── orchestrator_agent/  # Dynamic coordination using the Agent-as-Tool pattern
     ├── parallel_agent/      # Concurrent execution for multi-faceted tasks
-    └── sequential_agent/    # Linear pipelines for multi-stage workflows
+    ├── sequential_agent/    # Linear pipelines for multi-stage workflows
+    └── workflow_agent/      # ADK 2.0 Graph Workflow (Deterministic, Router, Fan-Out, Join)
 ```
 
 ## 🎯 Orchestration Patterns
@@ -40,42 +56,62 @@ Runs multiple agents or tool-calls concurrently to gather information or perform
 An agent that iteratively reviews and improves its own output (or the output of others) until a certain condition or quality bar is met.
 - **Use Case:** Code debugging, story refinement, translation optimization.
 
+### 6. Graph Workflow (ADK 2.0) (`workflow_agent`)
+A directed acyclic graph (DAG) workflow combining deterministic processing steps, dynamic routing, parallel execution (fan-out), quality gate validation, and barrier synchronization (join).
+- **Implementation:** Uses native Google ADK 2.0 `Workflow`, `FunctionNode`, `JoinNode`, and conditional `Edge(route=...)`.
+- **Flow:**
+  1. **Deterministic Sanitizer & Classifier:** Preprocesses query and extracts domain keywords (`FunctionNode`).
+  2. **Deterministic Route Selector:** Evaluates metadata and emits route events (`technical` vs `market`).
+  3. **Fan-Out Branches:**
+     - *Technical Branch:* Concurrent `Security Compliance Scanner` (deterministic AST/pattern check), `Cloud Architect Agent`, and `Performance Specialist Agent`. Output verified by a deterministic Quality Gate (`validate_technical_findings`).
+     - *Market Branch:* Concurrent `Competitor Analyst Agent` and `Financial Analyst Agent`. Output verified by a deterministic Quality Gate (`validate_market_findings`).
+  4. **Barrier Join (`JoinNode`):** Synchronizes concurrent branch executions into a unified structured dictionary.
+  5. **Executive Synthesizer Agent:** Synthesizes the finalized multi-domain executive report.
+- **Use Case:** Multi-domain enterprise research, policy-governed agent pipelines, deterministic validation gates.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Setup Environment
+```bash
+cd patterns
+
+# Copy environment template
+cp .env.example .env
+
+# Set your GEMINI_API_KEY in .env
+```
+
+### 2. Interactive Shell Runner
+Launch the interactive shell menu:
+```bash
+./run.sh
+```
+
+Or run any pattern directly:
+```bash
+./run.sh first          # Run Simple Agent
+./run.sh sequential     # Run Sequential Agent
+./run.sh parallel       # Run Parallel Agent
+./run.sh orchestrator   # Run Orchestrator Agent
+./run.sh loop           # Run Loop Agent
+./run.sh workflow       # Run ADK 2.0 Graph Workflow Agent
+```
+
+### 3. Diagnostics & Verification
+Run the self-diagnostic suite:
+```bash
+./run.sh verify         # Runs health check, import validation, and tests
+./run.sh test           # Runs pytest suite directly
+```
+
 ---
 
 ## 🔑 Key Concepts Covered
 
-- **Agent Orchestration**: Coordinating multiple specialized models to solve complex tasks.
-- **Tool Integration**: Connecting LLMs to external data sources (Google Search, APIs) via `FunctionTool`.
-- **State Management**: Passing context between agents using `output_key` and session state.
-- **Declarative Instructions**: Using structured system prompts to define roles and autonomy.
-
-## 🤖 Agent Instructions Template (SOP)
-
-When building your own agents, use this template to ensure consistent behavior:
-
-#### 1. IDENTITY & ROLE
-You are **{{Agent Name}}**, an AI specialized in **{{Domain}}**.
-Your primary objective is: **{{Primary Objective}}**.
-
-#### 2. OPERATIONAL MODE
-- **STRICT GUIDELINES**: Follow the SOP exactly. Do not deviate.
-- **STRATEGIC PLANNING**: Plan first, self-correct, and proactively find missing information.
-
-#### 3. TOOLS & CAPABILITIES
-You have access to:
-- `{{tool_name}}`: {{Precise description of intent and returns}}.
-
-#### 4. REASONING PROTOCOL (ReAct)
-Before responding, use an internal monologue to think through the steps:
-`Thought -> Action -> Observation -> Final Answer`
-
----
-
-## 🛠️ Prerequisites
-
-- **Python 3.10+**
-- **Google API Key** (Gemini)
-- **Environment variables** configured in a `.env` file.
-
-> [!TIP]
-> Each agent directory contains its own `agent.py` and `commons.py` explaining the specific implementation details of that pattern.
+- **Gemini 3.5 Flash**: Default model across all agents, configurable via `GEMINI_MODEL`.
+- **ADK 2.0 Graph Workflows**: Native DAG orchestration with `Workflow`, `FunctionNode`, `JoinNode`, and dynamic event-based routing.
+- **Centralized Commons**: Shared configuration and runner lifecycle in `agents/common/`.
+- **Reliable Imports**: Robust namespace imports with fallback compatibility.
+- **Automated Verification**: Comprehensive structural and mock execution tests.

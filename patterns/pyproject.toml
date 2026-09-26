@@ -1,0 +1,21 @@
+[project]
+name = "agent-patterns"
+version = "0.1.0"
+description = "AI Agent Workflow Patterns with Google ADK"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk>=2.5.0",
+    "google-genai>=2.15.0",
+    "python-dotenv>=1.2.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

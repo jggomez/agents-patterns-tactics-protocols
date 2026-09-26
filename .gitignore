@@ -139,3 +139,15 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.pytest_cache/
+

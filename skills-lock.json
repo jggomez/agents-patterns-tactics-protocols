@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "google-agents-cli-adk-code": {
+      "source": "google/agents-cli",
+      "sourceType": "github",
+      "skillPath": "skills/google-agents-cli-adk-code/SKILL.md",
+      "computedHash": "febd68b5de1e4d30fb3fe707f73e83321eddf2bc5be4c18a002de7473ac28514"
+    },
+    "google-agents-cli-deploy": {
+      "source": "google/agents-cli",
+      "sourceType": "github",
+      "skillPath": "skills/google-agents-cli-deploy/SKILL.md",
+      "computedHash": "e7f8d7eeab6754de0571c0d64035f04f0d21750b3084aeba87b5750cc3d167e2"
+    },
+    "google-agents-cli-eval": {
+      "source": "google/agents-cli",
+      "sourceType": "github",
+      "skillPath": "skills/google-agents-cli-eval/SKILL.md",
+      "computedHash": "7491df3d1896c35d918c8c73781701481028ced0bdc4275bb148614ac59daf47"
+    },
+    "google-agents-cli-scaffold": {
+      "source": "google/agents-cli",
+      "sourceType": "github",
+      "skillPath": "skills/google-agents-cli-scaffold/SKILL.md",
+      "computedHash": "2c3bf3a1471aded7b9dbc31354c23f2070d3474ff7a66c52636fcaefc3a365c1"
+    },
+    "google-agents-cli-workflow": {
+      "source": "google/agents-cli",
+      "sourceType": "github",
+      "skillPath": "skills/google-agents-cli-workflow/SKILL.md",
+      "computedHash": "678ed95f60c2735ca823b9990c8cea40f468eab86486ae6604057eb8aea52221"
+    }
+  }
+}

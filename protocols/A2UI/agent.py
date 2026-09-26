@@ -1,11 +1,9 @@
 import logging
 import os
-import json
 from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from google.adk.agents import LlmAgent
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
-from google.adk.tools import FunctionTool
 from google.adk.tools.mcp_tool import MCPToolset, StreamableHTTPConnectionParams
 
 logger = logging.getLogger(__name__)
@@ -13,7 +11,7 @@ logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
 load_dotenv()
 
-# We'll apply CORS to the a2a_app later after its creation.
+
 
 A2UI_SCHEMA_EXPLANATION = """
 A2UI uses a flat 'Adjacency List' model for UI. 
@@ -74,8 +72,10 @@ A2UI SCHEMA GUIDE:
 {A2UI_SCHEMA_EXPLANATION}
 """
 
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
 root_agent = LlmAgent(
-    model="gemini-2.5-flash",
+    model=MODEL_NAME,
     name="ui_currency_agent",
     description="An agent that returns dynamic A2UI components",
     instruction=SYSTEM_INSTRUCTION,
@@ -89,12 +89,13 @@ root_agent = LlmAgent(
 )
 
 # Expose as A2A
-a2a_app = to_a2a(root_agent, port=10001)
+port = int(os.getenv("PORT", 10001))
+a2a_app = to_a2a(root_agent, port=port)
 
 # Add CORS
 a2a_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For workshop simplicity, allowing all.
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -102,5 +103,5 @@ a2a_app.add_middleware(
 
 if __name__ == "__main__":
     import uvicorn
-    logger.info("Starting A2UI Agent Server (Refactored)...")
-    uvicorn.run(a2a_app, host="0.0.0.0", port=10001)
+    logger.info(f"Starting A2UI Agent Server on port {port} (model: {MODEL_NAME})...")
+    uvicorn.run(a2a_app, host="0.0.0.0", port=port)

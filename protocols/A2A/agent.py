@@ -22,8 +22,10 @@ SYSTEM_INSTRUCTION = (
 logger.info("--- Loading MCP tools from MCP Server... ---")
 logger.info("--- Creating ADK Currency Agent... ---")
 
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+
 root_agent = LlmAgent(
-    model="gemini-2.5-flash",
+    model=MODEL_NAME,
     name="currency_agent",
     description="An agent that can help with currency conversions",
     instruction=SYSTEM_INSTRUCTION,
@@ -37,4 +39,10 @@ root_agent = LlmAgent(
 )
 
 # Make the agent A2A-compatible
-a2a_app = to_a2a(root_agent, port=10000)
+port = int(os.getenv("PORT", 10000))
+a2a_app = to_a2a(root_agent, port=port)
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info(f"Starting A2A Agent Server on port {port} (model: {MODEL_NAME})...")
+    uvicorn.run(a2a_app, host="0.0.0.0", port=port)

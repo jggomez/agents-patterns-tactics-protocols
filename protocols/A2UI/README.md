@@ -40,7 +40,10 @@ uv run python server.py
 
 ### 2. Start the A2UI Agent
 ```bash
-cd ..
+# Return to A2UI directory if you were in MCP
+cd ../A2UI 
+uv run python -m uvicorn agent:a2a_app --host localhost --port 10001
+# OR
 uv run python agent.py
 ```
 

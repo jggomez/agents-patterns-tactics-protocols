@@ -1,70 +1,50 @@
-from google.adk.agents import Agent, SequentialAgent, ParallelAgent
-from google.adk.tools import google_search
-from google.adk.models.google_llm import Gemini
-from google.genai import types
-from Patterns.agents.parallel_agent.commons import call_agent_async, get_runner
+"""Parallel Agent: Concurrent execution of specialized researchers aggregated by an executive agent."""
+
+from __future__ import annotations
+
 import asyncio
-from dotenv import load_dotenv
+from google.adk.agents import Agent, ParallelAgent, SequentialAgent
+from google.adk.tools import google_search
 
-load_dotenv()
+try:
+    from patterns.agents.common import call_agent_async, get_model, get_runner
+except ModuleNotFoundError:
+    from agents.common import call_agent_async, get_model, get_runner
 
-retry_config = types.HttpRetryOptions(
-    attempts=5,
-    exp_base=7,
-    initial_delay=1,
-    http_status_codes=[429, 500, 503, 504],
-)
-
-# Tech Researcher: Focuses on AI and ML trends.
+# Tech Researcher: Focuses on AI and ML trends
 tech_researcher = Agent(
     name="TechResearcher",
-    model=Gemini(
-        model="gemini-2.5-flash-lite",
-        retry_options=retry_config
-    ),
-    instruction="""
-        Research the latest AI/ML trends. Include 3 key developments,
-        the main companies involved, and the potential impact. Keep the report very concise (100 words).""",
+    model=get_model(),
+    instruction="""Research the latest AI/ML trends. Include 3 key developments,
+    the main companies involved, and the potential impact. Keep the report very concise (100 words).""",
     tools=[google_search],
-    # The result of this agent will be stored in the session state with this key.
     output_key="tech_research",
 )
 
-# Health Researcher: Focuses on medical breakthroughs.
+# Health Researcher: Focuses on medical breakthroughs
 health_researcher = Agent(
     name="HealthResearcher",
-    model=Gemini(
-        model="gemini-2.5-flash-lite",
-        retry_options=retry_config
-    ),
-    instruction="""
-        Research recent medical breakthroughs. Include 3 significant advances,
-        their practical applications, and estimated timelines. Keep the report concise (100 words).""",
+    model=get_model(),
+    instruction="""Research recent medical breakthroughs. Include 3 significant advances,
+    their practical applications, and estimated timelines. Keep the report concise (100 words).""",
     tools=[google_search],
-    output_key="health_research",  # The result will be stored with this key.
+    output_key="health_research",
 )
 
-# Finance Researcher: Focuses on fintech trends.
+# Finance Researcher: Focuses on fintech trends
 finance_researcher = Agent(
     name="FinanceResearcher",
-    model=Gemini(
-        model="gemini-2.5-flash-lite",
-        retry_options=retry_config
-    ),
-    instruction="""
-        Research current fintech trends. Include 3 key trends,
-        their market implications, and the future outlook. Keep the report concise (100 words).""",
+    model=get_model(),
+    instruction="""Research current fintech trends. Include 3 key trends,
+    their market implications, and the future outlook. Keep the report concise (100 words).""",
     tools=[google_search],
-    output_key="finance_research",  # The result will be stored with this key.
+    output_key="finance_research",
 )
 
+# Aggregator Agent: Synthesizes findings from parallel researchers
 aggregator_agent = Agent(
     name="AggregatorAgent",
-    model=Gemini(
-        model="gemini-2.5-flash-lite",
-        retry_options=retry_config
-    ),
-    # It uses placeholders to inject the outputs from the parallel agents, which are now in the session state.
+    model=get_model(),
     instruction="""Combine these three research findings into a single executive summary:
 
     **Technology Trends:**
@@ -77,28 +57,35 @@ aggregator_agent = Agent(
     {finance_research}
 
     Your summary should highlight common themes, surprising connections, and the most important key takeaways from all three reports. The final summary should be around 200 words.""",
-    output_key="executive_summary",  # This will be the final output of the entire system.
+    output_key="executive_summary",
 )
 
-# The ParallelAgent runs all its sub-agents simultaneously.
+# Parallel research team running concurrently
 parallel_research_team = ParallelAgent(
     name="ParallelResearchTeam",
     sub_agents=[tech_researcher, health_researcher, finance_researcher],
 )
 
-# This SequentialAgent defines the high-level workflow: run the parallel team first, then run the aggregator.
+# Root pipeline: Run parallel team first, then aggregate
 root_agent = SequentialAgent(
     name="ResearchSystem",
     sub_agents=[parallel_research_team, aggregator_agent],
 )
 
 
-async def run_conversation():
+async def run_conversation() -> None:
+    """Executes the parallel research workflow."""
     runner, user_id, session_id = await get_runner(root_agent)
-    await call_agent_async("Run the daily executive briefing on Tech, Health, and Finance", runner, user_id, session_id)
+    await call_agent_async(
+        "Run the daily executive briefing on Tech, Health, and Finance",
+        runner,
+        user_id,
+        session_id,
+    )
 
 
-def main():
+def main() -> None:
+    """Entry point for direct script execution."""
     asyncio.run(run_conversation())
 
 
